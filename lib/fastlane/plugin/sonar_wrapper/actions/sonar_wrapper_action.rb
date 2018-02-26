@@ -6,23 +6,15 @@ module Fastlane
     class SonarWrapperAction < Action
       def self.run(params)
         UI.message("The sonar_wrapper plugin is working!")
-        scan_params = {
-          derived_data_path: "./DerivedData",
-          coverage: true
-        }
-
         if params
-          scan_params[:scheme] = params[:scan_scheme] if params[:scan_scheme]
-          scan_params[:devices] = params[:scan_devices] if params[:scan_devices]
-          Actions::ScanAction.run(scan_params)
-
-          profdata = `find ../DerivedData -name "Coverage.profdata"`
-          binary = `find ../DerivedData -path "*#{params[:product_name]}.app/#{params[:product_name]}"`
+          derived_data_path = params[:derived_data_path]
+          profdata = `find ../#{derived_data_path} -name "Coverage.profdata"`
+          binary = `find ../#{derived_data_path} -path "*#{params[:product_name]}.app/#{params[:product_name]}"`
 
           `xcrun llvm-cov report -instr-profile #{profdata} #{binary}`
 
           Actions::SonarAction.run({})
-          `rm -rf ./DerivedData`
+          `rm -rf #{derived_data_path}`
         else
           UI.message("parameters are not specified.")
         end
@@ -52,14 +44,10 @@ module Fastlane
           #                      description: "A description of your option",
           #                         optional: false,
           #                             type: String)
-          FastlaneCore::ConfigItem.new(key: :scan_scheme,
+          FastlaneCore::ConfigItem.new(key: :derived_data_path,
                                description: "A description of your option",
                                   optional: false,
                                       type: String),
-          FastlaneCore::ConfigItem.new(key: :scan_devices,
-                               description: "A description of your option",
-                                  optional: false,
-                                      type: Array),
           FastlaneCore::ConfigItem.new(key: :product_name,
                                description: "A description of your option",
                                   optional: false,
